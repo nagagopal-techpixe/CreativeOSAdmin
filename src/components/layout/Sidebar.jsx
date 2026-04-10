@@ -22,7 +22,6 @@ export default function Sidebar() {
       try {
         const res = await getNav();
         const data = res.data.data ?? res.data;
-
         setNavItems(
           Array.isArray(data) ? data : data.items ?? data.navItems ?? []
         );
@@ -32,31 +31,30 @@ export default function Sidebar() {
         setLoading(false);
       }
     };
-
     fetchNav();
   }, []);
 
-  const handleDashboard = () => {
-    navigate("/admin/dashboard");
-  };
-
+  const handleDashboard = () => navigate("/admin/dashboard");
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     navigate("/admin/login");
   };
 
-  const isActivePath = (path) => {
-    return location.pathname.startsWith(`/admin${path}`);
-  };
-
+  const isActivePath = (path) => location.pathname.startsWith(`/admin${path}`);
   const isDashboard = location.pathname === "/admin/dashboard";
+
+  // Add future tools here — no userId passed
+  const toolItems = [
+    { path: "/tool/models",      icon: "Cpu",      label: "Models"      },
+    { path: "/tool/curl-parser", icon: "Terminal", label: "cURL Parser" },
+  ];
 
   return (
     <div className="w-64 bg-black border-r border-gray-800 p-4 text-white flex flex-col justify-between">
-      
+
       {/* TOP SECTION */}
       <div>
-        <h1 className="text-xl font-bold mb-6">Admin  CreativeOS </h1>
+        <h1 className="text-xl font-bold mb-6">Admin CreativeOS</h1>
 
         {/* USER INFO */}
         {userId && (
@@ -64,36 +62,32 @@ export default function Sidebar() {
             <p className="text-[10px] text-blue-300 font-medium uppercase tracking-wider">
               Editing user
             </p>
-            <p className="text-[11px] text-blue-400 truncate mt-0.5">
-              {userId}
-            </p>
+            <p className="text-[11px] text-blue-400 truncate mt-0.5">{userId}</p>
           </div>
         )}
 
         <nav className="space-y-2">
-          
+
           {/* DASHBOARD */}
           <button
             onClick={handleDashboard}
             className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
-              ${
-                isDashboard
-                  ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                  : "hover:text-green-400"
+              ${isDashboard
+                ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                : "hover:text-green-400"
               }`}
           >
             <Icons.Home size={16} />
             <span>Dashboard</span>
           </button>
 
-          {/* STATIC ITEMS LINK */}
+          {/* ITEMS */}
           <Link
             to={withUser("/items")}
             className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
-              ${
-                isActivePath("/items")
-                  ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                  : "hover:text-green-400"
+              ${isActivePath("/items")
+                ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                : "hover:text-green-400"
               }`}
           >
             <Icons.Package size={16} />
@@ -107,16 +101,14 @@ export default function Sidebar() {
             navItems.map((item) => {
               const Icon = Icons[item.icon] || Icons.Circle;
               const active = isActivePath(item.path);
-
               return (
                 <Link
                   key={item.id}
                   to={withUser(item.path)}
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
-                    ${
-                      active
-                        ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                        : "hover:text-green-400"
+                    ${active
+                      ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                      : "hover:text-green-400"
                     }`}
                 >
                   <Icon size={16} />
@@ -125,20 +117,49 @@ export default function Sidebar() {
               );
             })
           )}
+
         </nav>
       </div>
 
       {/* BOTTOM SECTION */}
-      <div className="pt-4 border-t border-gray-800">
-        <button
-          onClick={handleLogout}
-          className="w-full text-left text-red-400 hover:text-red-500 transition-colors flex items-center gap-2"
-        >
-          <Icons.LogOut size={16} />
-          Logout
-        </button>
-      </div>
+      <div className="space-y-4">
 
+        {/* TOOLS GROUP */}
+        <div className="border-t border-gray-800 pt-4 space-y-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 px-2 mb-2">
+        CORE.API
+          </p>
+          {toolItems.map((tool) => {
+            const Icon = Icons[tool.icon] || Icons.Circle;
+            return (
+              <Link
+                key={tool.path}
+                to={`/admin${tool.path}`}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors
+                  ${isActivePath(tool.path)
+                    ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                    : "hover:text-green-400"
+                  }`}
+              >
+                <Icon size={16} />
+                <span>{tool.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* LOGOUT */}
+        <div className="border-t border-gray-800 pt-4">
+          <button
+            onClick={handleLogout}
+            className="w-full text-left text-red-400 hover:text-red-500 transition-colors flex items-center gap-2"
+          >
+            <Icons.LogOut size={16} />
+            Logout
+          </button>
+        </div>
+
+      </div>
     </div>
   );
-} 
+}

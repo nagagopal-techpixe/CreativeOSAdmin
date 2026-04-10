@@ -1,3 +1,4 @@
+// routes/AppRoutes.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import Dashboard from "../pages/Dashboard";
@@ -11,10 +12,11 @@ import StoryboardBuilder from "../pages/storyboard/storyboardBuilder";
 import UsersPage from "../pages/Users/UsersPage";
 import AdminLogin from "../pages/auth/AdminLogin";
 import ProtectedRoute from "./ProtectedRoute";
+import CurlParserPage from "../pages/Curlparsermodule/Curlparsermodule.jsx";
+import ModelsPage from "../pages/Curlparsermodule/Modelspage.jsx";
 
-//  Root redirect component
 function RootRedirect() {
-  const token = localStorage.getItem("token"); // 🔁 change key to match yours
+  const token = localStorage.getItem("token");
   return token ? (
     <Navigate to="/admin/dashboard" replace />
   ) : (
@@ -26,13 +28,10 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/*  Root redirect */}
         <Route path="/" element={<RootRedirect />} />
 
-        {/* 🔓 Public */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* 🔐 Protected */}
         <Route
           path="/admin"
           element={
@@ -41,15 +40,20 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="items" element={<NavPage />} />
-          <Route path="characters" element={<CharacterBuilder />} />
-          <Route path="videos" element={<VideoBuilder />} />
-          <Route path="voice" element={<VoiceBuilder />} />
-          <Route path="images" element={<ImageBuilder />} />
-          <Route path="music" element={<MusicBuilder />} />
-          <Route path="storyboard" element={<StoryboardBuilder />} />
-          <Route path="users" element={<UsersPage />} />
+          {/* Main */}
+          <Route path="dashboard"   element={<Dashboard />} />
+          <Route path="items"       element={<NavPage />} />
+          <Route path="characters"  element={<CharacterBuilder />} />
+          <Route path="videos"      element={<VideoBuilder />} />
+          <Route path="voice"       element={<VoiceBuilder />} />
+          <Route path="images"      element={<ImageBuilder />} />
+          <Route path="music"       element={<MusicBuilder />} />
+          <Route path="storyboard"  element={<StoryboardBuilder />} />
+          <Route path="users"       element={<UsersPage />} />
+
+          {/* Tools */}
+          <Route path="tool/curl-parser" element={<CurlParserPage />} />
+          <Route path="tool/models"      element={<ModelsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
