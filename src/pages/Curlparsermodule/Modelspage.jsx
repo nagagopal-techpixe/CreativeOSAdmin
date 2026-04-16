@@ -3,7 +3,7 @@ import { Cpu, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchAllModels, updateModel,deleteModel  } from "../../services/Modelsapi.js";
 
-// ─── Badge ────────────────────────────────────────────────────────────────────
+//  Badge 
 const Badge = ({ status }) => {
   const colors = {
     online:  "bg-blue-500/10 text-blue-400 border border-blue-500/20",
@@ -17,7 +17,7 @@ const Badge = ({ status }) => {
   );
 };
 
-// ─── EditModal ────────────────────────────────────────────────────────────────
+//  EditModal 
 const EditModal = ({ model, onClose, onSave }) => {
   const [form, setForm] = useState({
     model_name: model.model_name,
@@ -128,7 +128,7 @@ const EditModal = ({ model, onClose, onSave }) => {
   );
 };
 
-// ─── ModelsPage ───────────────────────────────────────────────────────────────
+//  ModelsPage 
 export default function ModelsPage() {
   const [models, setModels]         = useState([]);
   const [loading, setLoading]       = useState(true);

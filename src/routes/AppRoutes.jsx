@@ -13,7 +13,7 @@ import UsersPage from "../pages/Users/UsersPage";
 import AdminLogin from "../pages/auth/AdminLogin";
 import ProtectedRoute from "./ProtectedRoute";
 import CurlParserPage from "../pages/Curlparsermodule/Curlparsermodule.jsx";
-import ModelsPage from "../pages/Curlparsermodule/Modelspage.jsx";
+import ModelsPage from "../components/Models/ModelsPage.jsx";
 
 function RootRedirect() {
   const token = localStorage.getItem("token");

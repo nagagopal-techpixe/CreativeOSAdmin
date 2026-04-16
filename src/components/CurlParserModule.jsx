@@ -2,24 +2,33 @@
 import { useState, useEffect } from "react";
 import { Terminal, Rocket, ChevronDown, Tag, Zap, Link, Layers } from "lucide-react";
 import { fetchCategories, createModel } from "../services/Modelsapi.js";
-
 // ── dtype inference ───────────────────────────────────────────────────────────
 const KNOWN_FLOATS = new Set([
   "top_p", "temperature", "presence_penalty",
   "frequency_penalty", "top_k", "repetition_penalty"
 ]);
 
+const IMAGE_NAME_PATTERN = /image|img|photo|picture|thumbnail|avatar|portrait|frame|snapshot/i;
+const VIDEO_NAME_PATTERN = /video|clip|footage|film|reel|recording/i;
+
 function inferDtype(name, value) {
-  if (KNOWN_FLOATS.has(name))                      return "float";
-  if (typeof value === "boolean")                  return "boolean";
+  if (KNOWN_FLOATS.has(name))                       return "float";
+  if (typeof value === "boolean")                   return "boolean";
   if (typeof value === "number")
-    return Number.isInteger(value)                 ? "integer" : "float";
-  if (Array.isArray(value))                        return "array";
-  if (typeof value === "object" && value !== null) return "object";
+    return Number.isInteger(value)                  ? "integer" : "float";
+
+  // ← check image/video by name pattern BEFORE array check
+  // because Replicate sends image/video fields as [] by default
+  if (Array.isArray(value) || value === null || value === "") {
+    if (IMAGE_NAME_PATTERN.test(name))              return "image";
+    if (VIDEO_NAME_PATTERN.test(name))              return "video";
+  }
+
+  if (Array.isArray(value))                         return "array";
+  if (typeof value === "object" && value !== null)  return "object";
   return "string";
 }
-
-// ── curl parser ───────────────────────────────────────────────────────────────
+// ── curl parser 
 function parseCurl(raw) {
   const clean = raw.replace(/\\\s*\n/g, " ").trim();
 
@@ -56,13 +65,18 @@ function parseCurl(raw) {
     try { body = JSON.parse(bodyRaw); } catch { body = { _raw: bodyRaw }; }
   }
 
-  const inputSource = body?.input ?? body ?? {};
+// AFTER
+const rawInput = body?.input ?? body ?? {};
 
-  // schema is now [{ name, dtype }] instead of [string]
-  const schema = Object.entries(inputSource).map(([name, value]) => ({
-    name,
-    dtype: inferDtype(name, value),
-  }));
+// If input is an array (e.g. OpenAI messages format), treat it as a single "messages" field
+const inputSource = Array.isArray(rawInput)
+  ? { messages: rawInput }
+  : rawInput;
+
+const schema = Object.entries(inputSource).map(([name, value]) => ({
+  name,
+  dtype: inferDtype(name, value),
+}));
 
   return { url, method, headers, schema, inputSource };
 }
