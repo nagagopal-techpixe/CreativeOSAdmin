@@ -33,7 +33,7 @@ export default function ImageCategoriesStep({ userId }) {
   const [itemBusy, setItemBusy] = useState({});
   const [userPerms, setUserPerms] = useState(null);
 
-  // ── Load global data
+  //  Load global data
   useEffect(() => {
     getImageCategories()
       .then((data) => {
@@ -44,7 +44,7 @@ export default function ImageCategoriesStep({ userId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Load user permissions
+  //  Load user permissions
   useEffect(() => {
     if (!userId) return;
     fetchUserPermissions(userId).then((data) => {
@@ -58,7 +58,7 @@ export default function ImageCategoriesStep({ userId }) {
     });
   }, [userId]);
 
-  // ── Derived display
+  //  Derived display
   const isGroupAllowed = (groupId) => {
     if (!isUserMode || !userPerms) return true;
     const ag = userPerms.allowedGroups;
@@ -95,7 +95,7 @@ export default function ImageCategoriesStep({ userId }) {
     ? (userPerms?.isActive ?? true)
     : sectionActive;
 
-  // ── Section toggle
+  //  Section toggle
   const handleSectionToggle = async () => {
     if (isUserMode) {
       const newActive = !displaySectionActive;
@@ -113,7 +113,7 @@ export default function ImageCategoriesStep({ userId }) {
     }
   };
 
-  // ── Group toggle
+  //  Group toggle
   const handleGroupToggle = async (group) => {
     const gId = String(group._id);
     setGroupBusy((p) => ({ ...p, [gId]: true }));
@@ -151,7 +151,7 @@ export default function ImageCategoriesStep({ userId }) {
     }
   };
 
-  // ── Item toggle
+  //  Item toggle
   const handleItemToggle = async (group, item) => {
     const gId = String(group._id);
     const iId = String(item._id);

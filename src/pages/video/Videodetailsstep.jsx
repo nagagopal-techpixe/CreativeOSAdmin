@@ -28,7 +28,7 @@ export default function VideoDetailsStep({ userId }) {
   const [userPerms, setUserPerms] = useState(null);
   // Structure: { allowedGroups: [groupId], allowedOpts: { [groupId]: [optId] }, isActive: bool }
 
-  // ── Load global data
+  //  Load global data
   useEffect(() => {
     getVideoDetails()
       .then((data) => {
@@ -39,7 +39,7 @@ export default function VideoDetailsStep({ userId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Load user permissions if in user mode
+  //  Load user permissions if in user mode
   useEffect(() => {
     if (!userId) return;
     fetchUserPermissions(userId).then((data) => {
@@ -53,27 +53,27 @@ export default function VideoDetailsStep({ userId }) {
     });
   }, [userId]);
 
-  // ── Save user permissions helper
+  //  Save user permissions helper
   const persistUserPerms = async (newDetailPerms) => {
     setUserPerms(newDetailPerms);
     await saveUserPermissions(userId, "details", newDetailPerms); //  "details" as sectionKey
   };
 
-  // ── Is group allowed for user?
+  //  Is group allowed for user?
   const isGroupAllowed = (groupId) => {
     if (!isUserMode || !userPerms) return true;
     const ag = userPerms.allowedGroups ?? [];
     return ag.length === 0 || ag.includes(groupId);
   };
 
-  // ── Is opt allowed for user?
+  //  Is opt allowed for user?
   const isOptAllowed = (groupId, optId) => {
     if (!isUserMode || !userPerms) return true;
     const ao = userPerms.allowedOpts?.[groupId] ?? [];
     return ao.length === 0 || ao.includes(optId);
   };
 
-  // ── Display groups with user permissions overlaid
+  //  Display groups with user permissions overlaid
   const displayGroups =
     isUserMode && userPerms
       ? groups.map((g) => ({

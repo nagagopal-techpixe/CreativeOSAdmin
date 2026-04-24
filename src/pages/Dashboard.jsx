@@ -74,7 +74,7 @@ export default function Dashboard() {
   };
   return (
     <div className="p-6 min-h-screen text-slate-200">
-      {/* ── Mode selection ── */}
+      {/*  Mode selection  */}
       {!mode && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
           {/* Global */}
@@ -142,7 +142,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── User list ── */}
+      {/*  User list  */}
       {mode === "user" && (
         <div className="max-w-2xl">
           <div className="flex items-center gap-3 mb-4">
@@ -207,7 +207,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Create User ── */}
+      {/*  Create User  */}
       {mode === "create" && (
         <div className="max-w-md">
           <div className="flex items-center gap-3 mb-4">

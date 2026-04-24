@@ -26,7 +26,7 @@ export default function ImageDetailsStep({ userId }) {
   const [optBusy, setOptBusy] = useState({});
   const [userPerms, setUserPerms] = useState(null);
 
-  // ── Load global data
+  //  Load global data
   useEffect(() => {
     getImageDetails()
       .then((data) => {
@@ -37,7 +37,7 @@ export default function ImageDetailsStep({ userId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Load user permissions
+  //  Load user permissions
   useEffect(() => {
     if (!userId) return;
     fetchUserPermissions(userId).then((data) => {
@@ -51,7 +51,7 @@ export default function ImageDetailsStep({ userId }) {
     });
   }, [userId]);
 
-  // ── Derived display
+  //  Derived display
   const isGroupAllowed = (groupId) => {
     if (!isUserMode || !userPerms) return true;
 
@@ -84,7 +84,7 @@ export default function ImageDetailsStep({ userId }) {
     ? (userPerms?.isActive ?? true)
     : sectionActive;
 
-  // ── Section toggle
+  //  Section toggle
   const handleSectionToggle = async () => {
     if (isUserMode) {
       const newActive = !displaySectionActive;
@@ -102,7 +102,7 @@ export default function ImageDetailsStep({ userId }) {
     }
   };
 
-  // ── Group toggle
+  //  Group toggle
   const handleGroupToggle = async (group) => {
     const gId = String(group._id);
 
@@ -138,7 +138,7 @@ export default function ImageDetailsStep({ userId }) {
     }
   };
 
-  // ── Opt toggle
+  //  Opt toggle
   const handleOptToggle = async (group, opt) => {
     const gId = String(group._id);
     const oId = String(opt._id);

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchAllModels, deleteModel } from "../../services/Modelsapi.js";
 import EditModal from "./EditModal.jsx";   // ← separate file
 
-// ─── Badge ────────────────────────────────────────────────────────────────────
+//  Badge 
 const Badge = ({ status }) => {
   const colors = {
     online:  "bg-blue-500/10 text-blue-400 border border-blue-500/20",
@@ -18,7 +18,7 @@ const Badge = ({ status }) => {
   );
 };
 
-// ─── ModelsPage ───────────────────────────────────────────────────────────────
+//  ModelsPage 
 export default function ModelsPage() {
   const [models,     setModels]     = useState([]);
   const [loading,    setLoading]    = useState(true);

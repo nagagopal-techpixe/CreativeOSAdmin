@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { Terminal, Rocket, ChevronDown, Tag, Zap, Link, Layers } from "lucide-react";
 import { fetchCategories, createModel } from "../services/Modelsapi.js";
-// ── dtype inference ───────────────────────────────────────────────────────────
+
+//  dtype inference 
 const KNOWN_FLOATS = new Set([
   "top_p", "temperature", "presence_penalty",
   "frequency_penalty", "top_k", "repetition_penalty"
@@ -17,26 +18,21 @@ function inferDtype(name, value) {
   if (typeof value === "number")
     return Number.isInteger(value)                  ? "integer" : "float";
 
-  // ← check image/video by name pattern BEFORE array check
-  // because Replicate sends image/video fields as [] by default
-  if (Array.isArray(value) || value === null || value === "") {
-    if (IMAGE_NAME_PATTERN.test(name))              return "image";
-    if (VIDEO_NAME_PATTERN.test(name))              return "video";
-  }
+  // ✅ Moved here — checks name BEFORE checking value type
+  if (IMAGE_NAME_PATTERN.test(name))                return "image";
+  if (VIDEO_NAME_PATTERN.test(name))                return "video";
 
   if (Array.isArray(value))                         return "array";
   if (typeof value === "object" && value !== null)  return "object";
   return "string";
 }
-// ── curl parser 
+
+//  curl parser 
 function parseCurl(raw) {
   const clean = raw.replace(/\\\s*\n/g, " ").trim();
 
-  const urlMatch =
-    clean.match(/'(https?:\/\/[^']+)'/) ||
-    clean.match(/"(https?:\/\/[^"]+)"/) ||
-    clean.match(/https?:\/\/[^\s]+/);
-  const url = urlMatch ? (urlMatch[1] || urlMatch[0]).replace(/['"]/g, "").trim() : "";
+  const urlMatch = clean.match(/https?:\/\/[^\s'"]+(?=\s*$)/);
+const url = urlMatch ? urlMatch[0].trim() : "";
 
   const methodMatch = clean.match(/-X\s+([A-Z]+)/);
   const method = methodMatch ? methodMatch[1].toUpperCase() : "POST";
@@ -60,23 +56,37 @@ function parseCurl(raw) {
     if (m) { bodyRaw = m[1].replace(/\\'/g, "'").replace(/\\n/g, "\n"); break; }
   }
 
-  let body = {};
-  if (bodyRaw) {
-    try { body = JSON.parse(bodyRaw); } catch { body = { _raw: bodyRaw }; }
+let body = {};
+if (bodyRaw) {
+  try {
+    // Clean common curl escaping issues before parsing
+    const cleaned = bodyRaw
+      .replace(/\\"/g, '"')       // unescape \"
+      .replace(/\\\\/g, '\\')     // unescape \\
+      .replace(/\\n/g, '\n')      // unescape \n
+      .replace(/\\t/g, '\t')      // unescape \t
+      .trim()
+    body = JSON.parse(cleaned)
+  } catch {
+    // If still fails, try extracting JSON block directly
+    const jsonMatch = bodyRaw.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      try { body = JSON.parse(jsonMatch[0]) } catch { body = { _raw: bodyRaw } }
+    } else {
+      body = { _raw: bodyRaw }
+    }
   }
+}
 
-// AFTER
-const rawInput = body?.input ?? body ?? {};
+  const rawInput = body?.input ?? body ?? {};
+  const inputSource = Array.isArray(rawInput)
+    ? { messages: rawInput }
+    : rawInput;
 
-// If input is an array (e.g. OpenAI messages format), treat it as a single "messages" field
-const inputSource = Array.isArray(rawInput)
-  ? { messages: rawInput }
-  : rawInput;
-
-const schema = Object.entries(inputSource).map(([name, value]) => ({
-  name,
-  dtype: inferDtype(name, value),
-}));
+  const schema = Object.entries(inputSource).map(([name, value]) => ({
+    name,
+    dtype: inferDtype(name, value),
+  }));
 
   return { url, method, headers, schema, inputSource };
 }
@@ -87,9 +97,11 @@ export default function CurlParserModule({ onDeploy }) {
   const [categories, setCategories]       = useState([]);
   const [selectedCat, setSelectedCat]     = useState("");
   const [modelName, setModelName]         = useState("");
+  const [provider, setProvider]           = useState("");       // ← new
   const [deploying, setDeploying]         = useState(false);
   const [deployError, setDeployError]     = useState("");
   const [deploySuccess, setDeploySuccess] = useState(false);
+  const [attrLimits, setAttrLimits] = useState({})  
 
   useEffect(() => {
     fetchCategories()
@@ -110,8 +122,9 @@ export default function CurlParserModule({ onDeploy }) {
 
   const handleDeploy = async () => {
     if (!result?.url) return;
-    if (!modelName.trim()) { setDeployError("Model name is required."); return; }
+    if (!modelName.trim()) { setDeployError("Model name is required.");    return; }
     if (!selectedCat)      { setDeployError("Please select a category."); return; }
+    if (!provider.trim())  { setDeployError("Provider is required.");      return; } // ← new
 
     setDeploying(true);
     setDeployError("");
@@ -121,12 +134,18 @@ export default function CurlParserModule({ onDeploy }) {
       const payload = {
         model_name:       modelName.trim(),
         category:         selectedCat,
+        provider:         provider.trim(),   // ← new
+        isActive:         true,              // ← hardcoded
         link:             result.url,
-        model_attributes: result.schema,   // [{ name, dtype }]
+      model_attributes: result.schema.map(attr => ({
+  ...attr,
+  maxCount: attrLimits[attr.name] || null
+})),
       };
       const res = await createModel(payload);
       setDeploySuccess(true);
       setModelName("");
+      setProvider("");                        // ← reset
       onDeploy?.(res.data?.data ?? payload);
     } catch (err) {
       setDeployError(err.response?.data?.message ?? "Deploy failed. Please try again.");
@@ -141,7 +160,7 @@ export default function CurlParserModule({ onDeploy }) {
       {/* SPLIT PANELS */}
       <div className="grid grid-cols-2 gap-6 w-full" style={{ minHeight: "600px" }}>
 
-        {/* ── LEFT — Source Code ── */}
+        {/*  LEFT — Source Code  */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <Terminal size={12} className="text-zinc-500" />
@@ -170,7 +189,7 @@ export default function CurlParserModule({ onDeploy }) {
           </div>
         </div>
 
-        {/* ── RIGHT — Generated Schema ── */}
+        {/*  RIGHT — Generated Schema  */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <Layers size={12} className="text-zinc-500" />
@@ -184,7 +203,7 @@ export default function CurlParserModule({ onDeploy }) {
             style={{ height: "calc(100vh - 240px)", minHeight: "580px" }}
           >
 
-            {/* ── EMPTY STATE ── */}
+            {/*  EMPTY STATE  */}
             {!result ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center opacity-40">
@@ -201,7 +220,7 @@ export default function CurlParserModule({ onDeploy }) {
               </div>
             ) : (
 
-              /* ── RESULT STATE ── */
+              /*  RESULT STATE  */
               <div className="flex flex-col h-full">
 
                 {/* Scrollable top */}
@@ -220,7 +239,7 @@ export default function CurlParserModule({ onDeploy }) {
                     </div>
                   </div>
 
-                  {/* Input Attributes — only line changed: key and content use attr.name */}
+                  {/* Input Attributes */}
                   {result.schema.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -231,16 +250,36 @@ export default function CurlParserModule({ onDeploy }) {
                           {result.schema.length} fields
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {result.schema.map((attr) => (
-                          <span
-                            key={attr.name}
-                            className="bg-white text-black text-[10px] font-black italic uppercase px-3 py-1.5 rounded-lg tracking-wide"
-                          >
-                            {attr.name}
-                          </span>
-                        ))}
-                      </div>
+                <div className="flex flex-col gap-3">
+  {result.schema.map((attr) => (
+    <div key={attr.name}>
+      <span className="bg-white text-black text-[10px] font-black italic uppercase px-3 py-1.5 rounded-lg tracking-wide inline-block">
+        {attr.name}
+      </span>
+      {['image', 'video', 'audio'].includes(attr.dtype) && (
+        <div className="mt-2 flex items-center gap-3 px-1">
+          <label className="text-[9px] text-zinc-500 uppercase tracking-wider shrink-0">
+            Max Count
+          </label>
+          <input
+            type="number"
+            min="1"
+            placeholder="e.g. 2"
+            value={attrLimits[attr.name] || ''}
+            onChange={e => setAttrLimits(prev => ({
+              ...prev,
+              [attr.name]: e.target.value ? Number(e.target.value) : null
+            }))}
+            className="w-20 bg-zinc-800 border border-zinc-700 text-white text-xs px-2 py-1.5 rounded-lg outline-none focus:border-zinc-500"
+          />
+          <span className="text-[9px] text-zinc-600">
+            max {attr.dtype}s allowed
+          </span>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
                     </div>
                   )}
 
@@ -259,12 +298,22 @@ export default function CurlParserModule({ onDeploy }) {
                       <input
                         type="text"
                         value={modelName}
-                        onChange={(e) => {
-                          setModelName(e.target.value);
-                          setDeployError("");
-                          setDeploySuccess(false);
-                        }}
+                        onChange={(e) => { setModelName(e.target.value); setDeployError(""); setDeploySuccess(false); }}
                         placeholder="e.g. GPT-4o Vision"
+                        className="w-full bg-zinc-800 border border-zinc-700 hover:border-zinc-600 focus:border-zinc-500 text-white text-xs font-mono placeholder-zinc-600 px-4 py-3 rounded-xl outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* Provider */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-bold uppercase tracking-[0.15em] text-zinc-600">
+                        Provider <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={provider}
+                        onChange={(e) => { setProvider(e.target.value); setDeployError(""); setDeploySuccess(false); }}
+                        placeholder="e.g. OpenAI, Google, Anthropic"
                         className="w-full bg-zinc-800 border border-zinc-700 hover:border-zinc-600 focus:border-zinc-500 text-white text-xs font-mono placeholder-zinc-600 px-4 py-3 rounded-xl outline-none transition-colors"
                       />
                     </div>
@@ -278,11 +327,7 @@ export default function CurlParserModule({ onDeploy }) {
                         <Tag size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
                         <select
                           value={selectedCat}
-                          onChange={(e) => {
-                            setSelectedCat(e.target.value);
-                            setDeployError("");
-                            setDeploySuccess(false);
-                          }}
+                          onChange={(e) => { setSelectedCat(e.target.value); setDeployError(""); setDeploySuccess(false); }}
                           className="w-full appearance-none bg-zinc-800 border border-zinc-700 hover:border-zinc-600 focus:border-zinc-500 text-white text-xs font-mono pl-8 pr-8 py-3 rounded-xl outline-none transition-colors cursor-pointer"
                         >
                           <option value="" disabled>Select a category...</option>
@@ -299,7 +344,7 @@ export default function CurlParserModule({ onDeploy }) {
                   </div>
                 </div>
 
-                {/* ── Pinned bottom — feedback + deploy ── */}
+                {/*  Pinned bottom — feedback + deploy  */}
                 <div className="px-5 pb-5 pt-3 border-t border-zinc-800 shrink-0 space-y-3">
 
                   {deployError && (
@@ -337,7 +382,6 @@ export default function CurlParserModule({ onDeploy }) {
                   </button>
 
                 </div>
-
               </div>
             )}
           </div>
@@ -346,4 +390,4 @@ export default function CurlParserModule({ onDeploy }) {
       </div>
     </div>
   );
-} 
+}

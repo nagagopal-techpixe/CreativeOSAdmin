@@ -4,6 +4,7 @@ import CurlParserModule from "../../components/CurlParserModule.jsx";
 
 export default function CurlParserPage() {
   const navigate = useNavigate();
+  
 
   const handleDeploy = (model) => {
     // console.log("Deployed model:", model);

@@ -72,9 +72,9 @@ export const patchStoryboardRatio = async (itemId, payload) => {
   return res.data;
 };
 
-// ─
+// 
 // STEP 5 — Storyboard Details
-// ─
+// 
 
 /** GET /admin/storyboard/details → { items: [groupSchema], isActive } */
 export const getStoryboardDetails = async () => {

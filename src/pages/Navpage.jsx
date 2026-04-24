@@ -35,7 +35,7 @@ export default function NavPage() {
   const [sectionActive, setSectionActive] = useState(true);
   const [sectionBusy, setSectionBusy] = useState(false);
 
-  // ── fetch global nav
+  //  fetch global nav
   useEffect(() => {
     getNav()
       .then((res) => {
@@ -54,7 +54,7 @@ export default function NavPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── fetch user permissions ─
+  //  fetch user permissions 
   useEffect(() => {
     if (!userId) {
       setUserPerms(null);
@@ -87,7 +87,7 @@ export default function NavPage() {
     ? (userPerms?.isActive ?? true)
     : sectionActive;
 
-  // ── section toggle
+  //  section toggle
   const handleSectionToggle = async () => {
     if (isUserMode) {
       const newActive = !displaySectionActive;
@@ -108,7 +108,7 @@ export default function NavPage() {
     }
   };
 
-  // ── item toggle
+  //  item toggle
   const handleItemToggle = async (item) => {
     const itemId = item._id;
     setPatching((prev) => ({ ...prev, [itemId]: true }));

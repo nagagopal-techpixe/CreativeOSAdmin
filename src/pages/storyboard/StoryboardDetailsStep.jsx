@@ -26,7 +26,7 @@ export default function StoryboardDetailsStep({ userId }) {
   const [optBusy, setOptBusy] = useState({});
   const [userPerms, setUserPerms] = useState(null);
 
-  // ── Load global data
+  //  Load global data
   useEffect(() => {
     getStoryboardDetails()
       .then((data) => {
@@ -37,7 +37,7 @@ export default function StoryboardDetailsStep({ userId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Load user permissions
+  //  Load user permissions
   useEffect(() => {
     if (!userId) return;
     fetchUserPermissions(userId).then((data) => {
@@ -51,7 +51,7 @@ export default function StoryboardDetailsStep({ userId }) {
     });
   }, [userId]);
 
-  // ── Derived display
+  //  Derived display
   const isGroupAllowed = (groupId) => {
     if (!isUserMode || !userPerms) return true;
 
@@ -91,7 +91,7 @@ export default function StoryboardDetailsStep({ userId }) {
     ? (userPerms?.isActive ?? true)
     : sectionActive;
 
-  // ── Section toggle
+  //  Section toggle
   const handleSectionToggle = async () => {
     if (isUserMode) {
       const newActive = !displaySectionActive;
@@ -111,7 +111,7 @@ export default function StoryboardDetailsStep({ userId }) {
     }
   };
 
-  // ── Group toggle
+  //  Group toggle
   const handleGroupToggle = async (group) => {
     const gId = String(group._id);
     setGroupBusy((p) => ({ ...p, [gId]: true }));
@@ -151,7 +151,7 @@ export default function StoryboardDetailsStep({ userId }) {
     }
   };
 
-  // ── Opt toggle
+  //  Opt toggle
   const handleOptToggle = async (group, opt) => {
     const gId = String(group._id);
     const oId = String(opt._id);
